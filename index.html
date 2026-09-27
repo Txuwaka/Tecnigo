@@ -1,15 +1,32 @@
-<!-- Dentro del <head> de index.html -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#ef233c">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="TecniGo">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>TecniGo - Asistente TES</title>
 
-<script>
-  // Registra el service worker para modo sin conexión
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error:', err));
-    });
-  }
-</script>
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Metas para Android y Chrome -->
+  <meta name="theme-color" content="#ef233c" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- Metas para iOS Safari (iPhone) -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TecniGo" />
+
+  <!-- Registro seguro del Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('TecniGo SW registrado con éxito:', reg.scope))
+          .catch(err => console.warn('Error al registrar SW:', err));
+      });
+    }
+  </script>
+
+  <style>
+    /* ... aquí sigue todo el CSS de TecniGo ... */
