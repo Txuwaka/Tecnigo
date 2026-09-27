@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>TecniGo - Herramienta Táctica para Técnicos en Emergencias</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#090a0d">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1944,6 +1947,20 @@ Hora: ${new Date().toLocaleTimeString()}`;
       calculateApgar();
       resetTriageWizard();
     });
+  </script>
+  <script>
+    // Registrar el Service Worker para habilitar la PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(registration => {
+            console.log('ServiceWorker registrado con éxito con alcance:', registration.scope);
+          })
+          .catch(error => {
+            console.log('Fallo al registrar el ServiceWorker:', error);
+          });
+      });
+    }
   </script>
 </body>
 </html>
