@@ -1,6 +1,5 @@
-const CACHE_NAME = 'tecnigo-cache-v2';
+const CACHE_NAME = 'tecnigo-cache-v3';
 const urlsToCache = [
-  './',
   './index.html',
   './manifest.json',
   './icon-192.png',
