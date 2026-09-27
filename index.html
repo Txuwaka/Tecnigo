@@ -1,0 +1,15 @@
+<!-- Dentro del <head> de index.html -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ef233c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TecniGo">
+
+<script>
+  // Registra el service worker para modo sin conexión
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error:', err));
+    });
+  }
+</script>

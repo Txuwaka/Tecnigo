@@ -1,0 +1,22 @@
+{
+  "name": "TecniGo - Asistente TES",
+  "short_name": "TecniGo",
+  "description": "Herramienta de bolsillo para Técnicos en Emergencias Sanitarias",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#090a0d",
+  "theme_color": "#ef233c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
