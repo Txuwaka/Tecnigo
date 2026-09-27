@@ -17,16 +17,540 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="TecniGo" />
 
-  <!-- Registro seguro del Service Worker -->
+  <!-- Registro del Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('TecniGo SW registrado con éxito:', reg.scope))
-          .catch(err => console.warn('Error al registrar SW:', err));
+          .then(reg => console.log('TecniGo SW OK:', reg.scope))
+          .catch(err => console.warn('SW err:', err));
       });
     }
   </script>
 
   <style>
-    /* ... aquí sigue todo el CSS de TecniGo ... */
+    :root {
+      --bg-dark: #090a0d;
+      --card-bg: #12151c;
+      --card-border: #1f2430;
+      --accent-red: #ef233c;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-dark); color: var(--text-main); font-family: var(--font); line-height: 1.4; padding-bottom: 75px; }
+
+    header { background: #0e1118; border-bottom: 2px solid var(--accent-red); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .brand { display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 1.25rem; }
+    .brand span { color: var(--accent-red); }
+    .brand svg { fill: var(--accent-red); width: 22px; height: 22px; }
+    #clock { font-family: monospace; font-size: 1rem; color: var(--text-muted); font-weight: bold; }
+
+    nav { position: fixed; bottom: 0; left: 0; right: 0; background: #0e1118; border-top: 1px solid var(--card-border); display: flex; z-index: 100; height: 58px; }
+    .nav-btn { flex: 1; border: none; background: none; color: var(--text-muted); font-size: 0.65rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }
+    .nav-btn.active { color: var(--accent-red); font-weight: bold; }
+    .nav-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+    main { max-width: 600px; margin: 0 auto; padding: 12px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+    .card-title { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .card-title::before { content: ""; display: inline-block; width: 4px; height: 14px; background: var(--accent-red); border-radius: 2px; }
+    .subhead { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin: 8px 0 4px; }
+
+    .btn-group { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .chip { flex: 1; min-width: 70px; background: #1a1e27; border: 1px solid var(--card-border); color: var(--text-muted); padding: 8px 6px; border-radius: 8px; text-align: center; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+    .chip.active { background: var(--accent-red); color: white; border-color: var(--accent-red); }
+
+    .slider-box { margin-bottom: 12px; }
+    .slider-header { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; color: var(--text-muted); }
+    .slider-val { font-weight: bold; color: var(--text-main); font-size: 1rem; }
+    input[type=range] { width: 100%; accent-color: var(--accent-red); height: 6px; border-radius: 3px; background: #262c3b; outline: none; }
+
+    .result-box { background: #181d26; border: 1px solid #283040; border-radius: 10px; padding: 12px; text-align: center; margin-top: 10px; }
+    .result-num { font-size: 1.8rem; font-weight: 900; color: var(--accent-red); font-family: monospace; }
+    .result-sub { font-size: 0.8rem; color: var(--text-muted); }
+
+    .select-item { background: #1a1e27; border: 1px solid var(--card-border); border-radius: 8px; padding: 10px; margin-bottom: 6px; cursor: pointer; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+    .select-item.selected { border-color: var(--accent-red); background: rgba(239, 35, 60, 0.15); color: #fff; font-weight: 600; }
+
+    .metro-flash { width: 100%; height: 65px; border-radius: 10px; background: #1a1e27; border: 2px solid #283040; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 1.3rem; margin-bottom: 12px; transition: background 0.05s ease; }
+    .metro-flash.beat { background: var(--accent-red); color: white; }
+    .btn-action { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: 800; font-size: 0.95rem; cursor: pointer; text-transform: uppercase; }
+    .btn-red { background: var(--accent-red); color: white; }
+    .btn-dark { background: #262c3b; color: white; }
+
+    .triage-step { display: none; }
+    .triage-step.active { display: block; }
+    .triage-badge { font-weight: 900; padding: 10px; border-radius: 8px; text-align: center; font-size: 1.1rem; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 24 24"><path d="M19 10.5h-5.5V5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v5.5H5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5h5.5V19c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-5.5H19c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5z"/></svg>
+      <div><span>TECNI</span>GO</div>
+    </div>
+    <div id="clock">00:00:00</div>
+  </header>
+
+  <main>
+    <!-- TAB 1: OXÍGENO -->
+    <section id="tab-o2" class="tab-content active">
+      <div class="card">
+        <div class="card-title">Cálculo Balas de Oxígeno</div>
+        
+        <div class="subhead">Capacidad de la Bala (Litros agua)</div>
+        <div class="btn-group" id="bottle-caps">
+          <div class="chip active" onclick="setCap(2, this)">2 L (Portátil)</div>
+          <div class="chip" onclick="setCap(5, this)">5 L</div>
+          <div class="chip" onclick="setCap(10, this)">10 L (Ambulancia)</div>
+        </div>
+
+        <div class="subhead">Dispositivo Mascarilla / Caudal</div>
+        <div class="btn-group" id="mask-presets">
+          <div class="chip" onclick="setPreset(2, this)">Gafas (2 LPM)</div>
+          <div class="chip" onclick="setPreset(6, this)">Simple (6 LPM)</div>
+          <div class="chip active" onclick="setPreset(15, this)">Reservorio (15 LPM)</div>
+          <div class="chip" onclick="setPreset(15, this)">BVM / Ambú (15 LPM)</div>
+        </div>
+
+        <div class="slider-box" style="margin-top: 14px;">
+          <div class="slider-header">
+            <span>Presión Manómetro</span>
+            <span class="slider-val" id="press-val">200 bar</span>
+          </div>
+          <input type="range" id="press-range" min="10" max="300" step="10" value="200" oninput="calcO2()">
+        </div>
+
+        <div class="slider-box">
+          <div class="slider-header">
+            <span>Caudalímetro</span>
+            <span class="slider-val" id="flow-val">15 LPM</span>
+          </div>
+          <input type="range" id="flow-range" min="1" max="15" step="1" value="15" oninput="manualFlow(this.value)">
+        </div>
+
+        <div class="result-box">
+          <div class="result-sub">AUTONOMÍA DISPONIBLE (Reserva 20 bar)</div>
+          <div class="result-num" id="o2-time">24 min</div>
+          <div class="result-sub" id="o2-vol">360 Litros útiles</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: GLASGOW -->
+    <section id="tab-gcs" class="tab-content">
+      <div class="card">
+        <div class="card-title">Escala de Glasgow (GCS)</div>
+        
+        <div class="subhead">Apertura Ocular (O)</div>
+        <div class="select-item" onclick="setGCS('o', 4, this)"><span>4 - Espontánea</span><strong>4</strong></div>
+        <div class="select-item" onclick="setGCS('o', 3, this)"><span>3 - A la orden verbal</span><strong>3</strong></div>
+        <div class="select-item" onclick="setGCS('o', 2, this)"><span>2 - Al dolor</span><strong>2</strong></div>
+        <div class="select-item" onclick="setGCS('o', 1, this)"><span>1 - Ninguna</span><strong>1</strong></div>
+
+        <div class="subhead">Respuesta Verbal (V)</div>
+        <div class="select-item" onclick="setGCS('v', 5, this)"><span>5 - Orientado</span><strong>5</strong></div>
+        <div class="select-item" onclick="setGCS('v', 4, this)"><span>4 - Confuso</span><strong>4</strong></div>
+        <div class="select-item" onclick="setGCS('v', 3, this)"><span>3 - Palabras inapropiadas</span><strong>3</strong></div>
+        <div class="select-item" onclick="setGCS('v', 2, this)"><span>2 - Sonidos incomprensibles</span><strong>2</strong></div>
+        <div class="select-item" onclick="setGCS('v', 1, this)"><span>1 - Ninguna</span><strong>1</strong></div>
+
+        <div class="subhead">Respuesta Motora (M)</div>
+        <div class="select-item" onclick="setGCS('m', 6, this)"><span>6 - Obedece órdenes</span><strong>6</strong></div>
+        <div class="select-item" onclick="setGCS('m', 5, this)"><span>5 - Localiza el dolor</span><strong>5</strong></div>
+        <div class="select-item" onclick="setGCS('m', 4, this)"><span>4 - Retirada al dolor</span><strong>4</strong></div>
+        <div class="select-item" onclick="setGCS('m', 3, this)"><span>3 - Flexión anormal (Decorticación)</span><strong>3</strong></div>
+        <div class="select-item" onclick="setGCS('m', 2, this)"><span>2 - Extensión anormal (Descerebración)</span><strong>2</strong></div>
+        <div class="select-item" onclick="setGCS('m', 1, this)"><span>1 - Ninguna</span><strong>1</strong></div>
+
+        <div class="result-box">
+          <div class="result-sub">PUNTUACIÓN TOTAL</div>
+          <div class="result-num" id="gcs-score">15 / 15</div>
+          <div class="result-sub" id="gcs-desc" style="font-weight:bold; color:var(--green);">TCE Leve (Alerta)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: APGAR -->
+    <section id="tab-apgar" class="tab-content">
+      <div class="card">
+        <div class="card-title">Test de Apgar Neonatal</div>
+
+        <div class="subhead">1. Frecuencia Cardíaca</div>
+        <div class="select-item" onclick="setApgar('fc', 2, this)"><span>> 100 lpm</span><strong>2</strong></div>
+        <div class="select-item" onclick="setApgar('fc', 1, this)"><span>< 100 lpm</span><strong>1</strong></div>
+        <div class="select-item" onclick="setApgar('fc', 0, this)"><span>Ausente (0 lpm)</span><strong>0</strong></div>
+
+        <div class="subhead">2. Esfuerzo Respiratorio</div>
+        <div class="select-item" onclick="setApgar('resp', 2, this)"><span>Llanto vigoroso, regular</span><strong>2</strong></div>
+        <div class="select-item" onclick="setApgar('resp', 1, this)"><span>Débil / irregular</span><strong>1</strong></div>
+        <div class="select-item" onclick="setApgar('resp', 0, this)"><span>Ausente</span><strong>0</strong></div>
+
+        <div class="subhead">3. Tono Muscular</div>
+        <div class="select-item" onclick="setApgar('tone', 2, this)"><span>Movimientos activos</span><strong>2</strong></div>
+        <div class="select-item" onclick="setApgar('tone', 1, this)"><span>Cierta flexión</span><strong>1</strong></div>
+        <div class="select-item" onclick="setApgar('tone', 0, this)"><span>Flácido</span><strong>0</strong></div>
+
+        <div class="subhead">4. Reflejo (Estimulación)</div>
+        <div class="select-item" onclick="setApgar('refl', 2, this)"><span>Llanto / estornudo</span><strong>2</strong></div>
+        <div class="select-item" onclick="setApgar('refl', 1, this)"><span>Mueca leve</span><strong>1</strong></div>
+        <div class="select-item" onclick="setApgar('refl', 0, this)"><span>Sin respuesta</span><strong>0</strong></div>
+
+        <div class="subhead">5. Coloración</div>
+        <div class="select-item" onclick="setApgar('color', 2, this)"><span>Completamente rosado</span><strong>2</strong></div>
+        <div class="select-item" onclick="setApgar('color', 1, this)"><span>Acrocianosis (manos/pies azules)</span><strong>1</strong></div>
+        <div class="select-item" onclick="setApgar('color', 0, this)"><span>Cianótico / pálido</span><strong>0</strong></div>
+
+        <div class="result-box">
+          <div class="result-sub">TEST APGAR TOTAL</div>
+          <div class="result-num" id="apgar-score">10 / 10</div>
+          <div class="result-sub" id="apgar-desc" style="color:var(--green); font-weight:bold;">Excelente adaptación (Normal 7-10)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: RCP -->
+    <section id="tab-cpr" class="tab-content">
+      <div class="card">
+        <div class="card-title">Metrónomo RCP (110 BPM)</div>
+        
+        <div class="btn-group">
+          <div class="chip active" onclick="setCPRRatio(30, this)">30:2 (Adulto)</div>
+          <div class="chip" onclick="setCPRRatio(15, this)">15:2 (Pediátrico)</div>
+          <div class="chip" onclick="setCPRRatio(0, this)">Continuo</div>
+        </div>
+
+        <div class="metro-flash" id="metro-box">
+          <div style="font-size:1.4rem;">110 BPM</div>
+          <div id="metro-counter" style="font-size:0.85rem; font-weight:normal; color:#a1a1aa;">Compresión 0</div>
+        </div>
+
+        <button class="btn-action btn-red" id="metro-btn" onclick="toggleMetronome()">INICIAR METRÓNOMO</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Regla 4H y 4T</div>
+        <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
+          <strong style="color:var(--accent-red);">4H:</strong> Hipoxia • Hipovolemia • Hipo/Hiperpotasemia/Metabólica • Hipotermia.<br>
+          <strong style="color:var(--accent-red);">4T:</strong> Neumotórax a Tensión • Taponamiento Cardíaco • Tóxicos • Tromboembolismo.
+        </p>
+      </div>
+    </section>
+
+    <!-- TAB 5: ADR -->
+    <section id="tab-adr" class="tab-content">
+      <div class="card">
+        <div class="card-title">Gases ADR y Mercancías</div>
+        <input type="text" id="adr-search" placeholder="Buscar por ONU (1072, 1075...) o nombre..." 
+               style="width:100%; padding:10px; background:#1a1e27; border:1px solid var(--card-border); color:#fff; border-radius:8px; margin-bottom:12px;"
+               oninput="filterADR(this.value)">
+
+        <div id="adr-list"></div>
+      </div>
+    </section>
+
+    <!-- TAB 6: TRIAGE -->
+    <section id="tab-triage" class="tab-content">
+      <div class="card">
+        <div class="card-title">Triaje START</div>
+        
+        <div id="triage-step-1" class="triage-step active">
+          <p style="margin-bottom:10px; font-weight:600;">¿El paciente puede caminar?</p>
+          <div class="btn-group">
+            <button class="btn-action btn-red" onclick="finishTriage('VERDE (Leve / Demorable)', '#22c55e')">SÍ (Camina)</button>
+            <button class="btn-action btn-dark" onclick="goStep(2)">NO (No camina)</button>
+          </div>
+        </div>
+
+        <div id="triage-step-2" class="triage-step">
+          <p style="margin-bottom:10px; font-weight:600;">¿Respira de forma espontánea?</p>
+          <div class="btn-group">
+            <button class="btn-action btn-dark" onclick="goStep(3)">SÍ (Respira)</button>
+            <button class="btn-action btn-red" onclick="goStep(22)">NO (Apnea)</button>
+          </div>
+        </div>
+
+        <div id="triage-step-22" class="triage-step">
+          <p style="margin-bottom:10px; font-weight:600;">Tras abrir vía aérea (frente-mentón): ¿respira?</p>
+          <div class="btn-group">
+            <button class="btn-action btn-red" onclick="finishTriage('ROJO (Prioridad 1 - Inmediato)', '#ef4444')">SÍ</button>
+            <button class="btn-action btn-dark" onclick="finishTriage('NEGRO (Fallecido)', '#000000')">NO</button>
+          </div>
+        </div>
+
+        <div id="triage-step-3" class="triage-step">
+          <p style="margin-bottom:10px; font-weight:600;">Frecuencia Respiratoria:</p>
+          <div class="btn-group">
+            <button class="btn-action btn-red" onclick="finishTriage('ROJO (Prioridad 1)', '#ef4444')">< 10 ó > 30 rpm</button>
+            <button class="btn-action btn-dark" onclick="goStep(4)">10 a 30 rpm</button>
+          </div>
+        </div>
+
+        <div id="triage-step-4" class="triage-step">
+          <p style="margin-bottom:10px; font-weight:600;">Pulso Radial y Relleno Capilar:</p>
+          <div class="btn-group">
+            <button class="btn-action btn-red" onclick="finishTriage('ROJO (Prioridad 1 - Shock)', '#ef4444')">Sin Pulso / > 2s</button>
+            <button class="btn-action btn-dark" onclick="goStep(5)">Pulso Presente / < 2s</button>
+          </div>
+        </div>
+
+        <div id="triage-step-5" class="triage-step">
+          <p style="margin-bottom:10px; font-weight:600;">¿Obedece órdenes sencillas?</p>
+          <div class="btn-group">
+            <button class="btn-action btn-dark" onclick="finishTriage('AMARILLO (Prioridad 2 - Urgente)', '#eab308')">SÍ (Obedece)</button>
+            <button class="btn-action btn-red" onclick="finishTriage('ROJO (Prioridad 1)', '#ef4444')">NO</button>
+          </div>
+        </div>
+
+        <div id="triage-result" style="display:none; margin-top:14px;">
+          <div class="triage-badge" id="triage-badge-text">ROJO</div>
+          <button class="btn-action btn-dark" style="margin-top:10px;" onclick="resetTriage()">NUEVO TRIAJE</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav>
+    <button class="nav-btn active" onclick="switchNav('tab-o2', this)">
+      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.5h-2v-5h2zm0-7h-2V7h2z"/></svg>
+      Oxígeno
+    </button>
+    <button class="nav-btn" onclick="switchNav('tab-gcs', this)">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2zm0-8h-2V7h2z"/></svg>
+      Glasgow
+    </button>
+    <button class="nav-btn" onclick="switchNav('tab-apgar', this)">
+      <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      Apgar
+    </button>
+    <button class="nav-btn" onclick="switchNav('tab-cpr', this)">
+      <svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42A7.92 7.92 0 0 1 20 12c0 4.42-3.58 8-8 8s-8-3.58-8-8c0-2.45 1.11-4.65 2.86-6.12L5.44 4.44A9.95 9.95 0 0 0 2 12c0 5.52 4.48 10 10 10s10-4.48 10-10c0-2.89-1.23-5.5-3.17-7.33z"/></svg>
+      RCP
+    </button>
+    <button class="nav-btn" onclick="switchNav('tab-adr', this)">
+      <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      ADR
+    </button>
+    <button class="nav-btn" onclick="switchNav('tab-triage', this)">
+      <svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg>
+      Triage
+    </button>
+  </nav>
+
+  <script>
+    setInterval(() => {
+      document.getElementById('clock').textContent = new Date().toLocaleTimeString('es-ES');
+    }, 1000);
+
+    function switchNav(id, btn) {
+      document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    let bottleCap = 2;
+    function setCap(c, el) {
+      bottleCap = c;
+      document.querySelectorAll('#bottle-caps .chip').forEach(ch => ch.classList.remove('active'));
+      el.classList.add('active');
+      calcO2();
+    }
+    function setPreset(f, el) {
+      document.getElementById('flow-range').value = f;
+      document.querySelectorAll('#mask-presets .chip').forEach(ch => ch.classList.remove('active'));
+      el.classList.add('active');
+      calcO2();
+    }
+    function manualFlow(val) {
+      calcO2();
+    }
+    function calcO2() {
+      const p = parseInt(document.getElementById('press-range').value);
+      const f = parseInt(document.getElementById('flow-range').value);
+      document.getElementById('press-val').textContent = p + ' bar';
+      document.getElementById('flow-val').textContent = f + ' LPM';
+
+      const usefulPress = Math.max(0, p - 20);
+      const liters = usefulPress * bottleCap;
+      const minTotal = f > 0 ? Math.floor(liters / f) : 0;
+
+      const h = Math.floor(minTotal / 60);
+      const m = minTotal % 60;
+      document.getElementById('o2-time').textContent = (h > 0 ? h + 'h ' : '') + m + ' min';
+      document.getElementById('o2-vol').textContent = liters + ' Litros útiles (Reserva 20 bar)';
+    }
+    calcO2();
+
+    let gcs = { o: 4, v: 5, m: 6 };
+    function setGCS(type, val, el) {
+      gcs[type] = val;
+      const parent = el.parentElement;
+      parent.querySelectorAll('.select-item').forEach(item => {
+        if (item.getAttribute('onclick')?.includes(`'${type}'`)) item.classList.remove('selected');
+      });
+      el.classList.add('selected');
+
+      const total = gcs.o + gcs.v + gcs.m;
+      document.getElementById('gcs-score').textContent = total + ' / 15';
+
+      const desc = document.getElementById('gcs-desc');
+      if (total <= 8) {
+        desc.textContent = 'CRÍTICO: Coma / Criterio IOT';
+        desc.style.color = 'var(--red)';
+      } else if (total <= 12) {
+        desc.textContent = 'TCE Moderado';
+        desc.style.color = 'var(--yellow)';
+      } else {
+        desc.textContent = 'TCE Leve (Alerta)';
+        desc.style.color = 'var(--green)';
+      }
+    }
+
+    let apgar = { fc: 2, resp: 2, tone: 2, refl: 2, color: 2 };
+    function setApgar(param, val, el) {
+      apgar[param] = val;
+      const parent = el.parentElement;
+      parent.querySelectorAll('.select-item').forEach(item => {
+        if (item.getAttribute('onclick')?.includes(`'${param}'`)) item.classList.remove('selected');
+      });
+      el.classList.add('selected');
+
+      const total = apgar.fc + apgar.resp + apgar.tone + apgar.refl + apgar.color;
+      document.getElementById('apgar-score').textContent = total + ' / 10';
+
+      const desc = document.getElementById('apgar-desc');
+      if (total >= 7) {
+        desc.textContent = 'Excelente adaptación (Normal 7-10)';
+        desc.style.color = 'var(--green)';
+      } else if (total >= 4) {
+        desc.textContent = 'Depresión moderada: O2 y estimulación';
+        desc.style.color = 'var(--yellow)';
+      } else {
+        desc.textContent = 'CRÍTICO (0-3): Reanimación neonatal inmediata';
+        desc.style.color = 'var(--red)';
+      }
+    }
+
+    let metroTimer = null;
+    let audioCtx = null;
+    let compressions = 0;
+    let ratioC = 30;
+
+    function setCPRRatio(c, el) {
+      ratioC = c;
+      compressions = 0;
+      document.querySelectorAll('#tab-cpr .chip').forEach(ch => ch.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function beep(freq = 880, dur = 0.08) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + dur);
+      } catch (e) {}
+    }
+
+    function toggleMetronome() {
+      const btn = document.getElementById('metro-btn');
+      const box = document.getElementById('metro-box');
+      const counterEl = document.getElementById('metro-counter');
+
+      if (metroTimer) {
+        clearInterval(metroTimer);
+        metroTimer = null;
+        btn.textContent = 'INICIAR METRÓNOMO';
+        btn.className = 'btn-action btn-red';
+        box.classList.remove('beat');
+      } else {
+        btn.textContent = 'PARAR';
+        btn.className = 'btn-action btn-dark';
+        compressions = 0;
+
+        const interval = (60 / 110) * 1000;
+        metroTimer = setInterval(() => {
+          compressions++;
+          box.classList.add('beat');
+          
+          if (ratioC > 0 && compressions >= ratioC) {
+            beep(1200, 0.15);
+            counterEl.textContent = `¡Ventilar 2 veces! (Ciclo fin)`;
+            compressions = 0;
+          } else {
+            beep(880, 0.06);
+            counterEl.textContent = ratioC > 0 ? `Compresión ${compressions} / ${ratioC}` : `Continua`;
+          }
+
+          setTimeout(() => box.classList.remove('beat'), 90);
+        }, interval);
+      }
+    }
+
+    const adrList = [
+      { un: "1072", name: "OXÍGENO COMPRIMIDO", danger: "25", desc: "Comburente. Alejar de grasas y aceites. Favorece el fuego violentamente." },
+      { un: "1075", name: "GLP / BUTANO / PROPANO", danger: "23", desc: "Gas inflamable muy pesado. Riesgo BLEVE por sobrecalentamiento." },
+      { un: "1005", name: "AMONÍACO ANHIDRO", danger: "268", desc: "Tóxico y corrosivo. Quemaduras respiratorias y cutáneas severas." },
+      { un: "1017", name: "CLORO", danger: "265", desc: "Tóxico y oxidante. Nube densa a ras de suelo. Acercarse a favor del viento." },
+      { un: "1013", name: "DIÓXIDO DE CARBONO (CO2)", danger: "20", desc: "Asfixiante simple. Desplaza el oxígeno en sótanos o zonas bajas." },
+      { un: "1202", name: "GASÓLEO / DIÉSEL", danger: "30", desc: "Líquido inflamable. Punto de inflamación > 60 ºC." },
+      { un: "1203", name: "GASOLINA", danger: "33", desc: "Líquido muy inflamable. Vapores explosivos a temperatura ambiente." }
+    ];
+
+    function renderADR(items) {
+      document.getElementById('adr-list').innerHTML = items.map(i => `
+        <div style="background:#1a1e27; border:1px solid var(--card-border); border-radius:8px; padding:10px; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <strong style="color:var(--accent-red); font-size:1.1rem;">UN ${i.un}</strong>
+            <span style="background:#f97316; color:#000; font-weight:900; font-size:0.75rem; padding:2px 8px; border-radius:4px;">Panel: ${i.danger}</span>
+          </div>
+          <div style="font-weight:bold; font-size:0.85rem; margin-bottom:4px;">${i.name}</div>
+          <div style="font-size:0.75rem; color:var(--text-muted);">${i.desc}</div>
+        </div>
+      `).join('');
+    }
+    function filterADR(q) {
+      const term = q.toLowerCase();
+      renderADR(adrList.filter(i => i.un.includes(term) || i.name.toLowerCase().includes(term)));
+    }
+    renderADR(adrList);
+
+    function goStep(s) {
+      document.querySelectorAll('.triage-step').forEach(el => el.classList.remove('active'));
+      const target = document.getElementById('triage-step-' + s);
+      if (target) target.classList.add('active');
+    }
+    function finishTriage(res, col) {
+      document.querySelectorAll('.triage-step').forEach(el => el.classList.remove('active'));
+      const r = document.getElementById('triage-result');
+      const b = document.getElementById('triage-badge-text');
+      r.style.display = 'block';
+      b.textContent = res;
+      b.style.backgroundColor = col;
+      b.style.color = col === '#000000' ? '#fff' : '#000';
+    }
+    function resetTriage() {
+      document.getElementById('triage-result').style.display = 'none';
+      goStep(1);
+    }
+  </script>
+</body>
+</html>
