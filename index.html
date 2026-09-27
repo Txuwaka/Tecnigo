@@ -88,6 +88,29 @@
       0% { background-color: #ef233c; color: #ffffff; }
       100% { background-color: #0f1117; }
     }
+    
+    /* Clases para los rombos ADR (Mercancías Peligrosas) */
+    .adr-diamond {
+      width: 36px; height: 36px;
+      transform: rotate(45deg);
+      border-radius: 2px;
+      display: flex; justify-content: center; align-items: center;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.15);
+      flex-shrink: 0;
+      margin: 4px;
+    }
+    .adr-content {
+      transform: rotate(-45deg);
+      font-size: 16px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+    .adr-41 { background: repeating-linear-gradient(45deg, #ef233c, #ef233c 4px, #ffffff 4px, #ffffff 8px); }
+    .adr-42 { background: linear-gradient(to bottom, #ffffff 50%, #ef233c 50%); }
+    .adr-52 { background: linear-gradient(to bottom, #ef233c 50%, #facc15 50%); }
+    .adr-7  { background: linear-gradient(to bottom, #facc15 50%, #ffffff 50%); }
+    .adr-8  { background: linear-gradient(to bottom, #ffffff 50%, #090a0d 50%); }
+    .adr-9  { background: linear-gradient(to bottom, transparent 50%, #ffffff 50%), repeating-linear-gradient(45deg, #090a0d, #090a0d 3px, #ffffff 3px, #ffffff 6px); }
   </style>
 </head>
 <body class="text-carbon-200 flex flex-col h-full overflow-hidden select-none bg-carbon-950">
@@ -717,71 +740,234 @@
         
         <div class="flex items-center space-x-2.5 pb-3 border-b border-carbon-800">
           <span class="p-2 rounded-xl bg-redmed-950 border border-redmed-700/50 text-redmed-400">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2L2 12l10 10 10-10L12 2z"/></svg>
           </span>
           <div>
-            <h2 class="text-base sm:text-lg font-extrabold text-white">Mercancías Peligrosas: ADR & Gases</h2>
-            <p class="text-xs text-carbon-400">Identificación de paneles naranja, números ONU de gases y código Kemler.</p>
+            <h2 class="text-base sm:text-lg font-extrabold text-white">Mercancías Peligrosas: ADR</h2>
+            <p class="text-xs text-carbon-400">Panel naranja (Kemler/ONU) y Etiquetas de Riesgo.</p>
           </div>
         </div>
 
-        <!-- Buscador -->
-        <div class="relative">
-          <input type="text" id="adrSearchInput" placeholder="Buscar por Nº ONU (1072, 1075, 1005...) o Kemler (20, 23, 268...)" oninput="searchAdrDatabase()" class="w-full bg-carbon-900 border border-carbon-700 rounded-xl px-4 py-3 pl-11 text-sm text-white placeholder-carbon-500 focus:border-redmed-500 outline-none font-mono">
-          <svg class="w-5 h-5 text-carbon-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <!-- 1. Explicación del Panel Naranja -->
+        <div class="p-4 rounded-xl bg-carbon-900 border border-carbon-800 flex flex-col sm:flex-row items-center justify-center gap-6">
+          <div class="w-36 h-24 rounded-lg bg-amber-500 border-4 border-black text-black font-black flex flex-col items-center justify-center font-mono shadow-xl shrink-0">
+            <span class="text-xl tracking-widest border-b-2 border-black w-full text-center">X336</span>
+            <span class="text-xl tracking-widest w-full text-center">1230</span>
+          </div>
+          <div class="text-xs text-carbon-300 space-y-2 font-mono">
+            <p><strong class="text-white">Arriba (Peligro/Kemler):</strong> Tipo e intensidad del riesgo (2-3 cifras, a veces prefijo 'X').</p>
+            <p><strong class="text-white">Abajo (Nº ONU):</strong> Identificación exacta de la sustancia (Ej: 1230 = Metanol).</p>
+          </div>
         </div>
 
-        <!-- Panel Naranja Interactivo -->
-        <div class="p-4 rounded-xl bg-carbon-900 border border-carbon-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div class="flex items-center space-x-4">
-            <!-- Gráfico Panel Naranja Oficial -->
-            <div class="w-36 h-24 rounded-lg bg-amber-500 border-4 border-black text-black font-black flex flex-col items-center justify-center font-mono shadow-xl">
-              <span id="panelKemlerDisplay" class="text-xl tracking-widest border-b-2 border-black w-full text-center">25</span>
-              <span id="panelUnDisplay" class="text-xl tracking-widest w-full text-center">1072</span>
+        <!-- 2. Tabla de Números Kemler -->
+        <div class="overflow-hidden rounded-xl border border-carbon-800 bg-carbon-850/50">
+          <table class="w-full text-left text-xs text-carbon-300">
+            <thead class="bg-carbon-900 text-carbon-200 uppercase font-bold">
+              <tr>
+                <th class="px-4 py-3 border-b border-carbon-800 w-16">Cifra</th>
+                <th class="px-4 py-3 border-b border-carbon-800">Significado del Riesgo</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-carbon-800">
+              <tr class="hover:bg-carbon-800 transition-colors bg-redmed-950/20">
+                <td class="px-4 py-2 font-mono text-redmed-400 font-black text-sm">X</td>
+                <td class="px-4 py-2 text-white font-bold">¡PROHIBIDO USAR AGUA! Reacciona de forma peligrosa.</td>
+              </tr>
+              <tr class="hover:bg-carbon-800 transition-colors">
+                <td class="px-4 py-2 font-mono font-bold text-white text-sm">2</td>
+                <td class="px-4 py-2">Emisión de gases debido a la presión o reacción química.</td>
+              </tr>
+              <tr class="hover:bg-carbon-800 transition-colors">
+                <td class="px-4 py-2 font-mono font-bold text-white text-sm">3</td>
+                <td class="px-4 py-2">Inflamabilidad de materias líquidas (vapores) y gases.</td>
+              </tr>
+              <tr class="hover:bg-carbon-800 transition-colors">
+                <td class="px-4 py-2 font-mono font-bold text-white text-sm">4</td>
+                <td class="px-4 py-2">Inflamabilidad de materias sólidas.</td>
+              </tr>
+              <tr class="hover:bg-carbon-800 transition-colors">
+                <td class="px-4 py-2 font-mono font-bold text-white text-sm">5</td>
+                <td class="px-4 py-2">Efecto comburente (favorece el incendio).</td>
+              </tr>
+              <tr class="hover:bg-carbon-800 transition-colors">
+                <td class="px-4 py-2 font-mono font-bold text-white text-sm">6</td>
+                <td class="px-4 py-2">Toxicidad o riesgo de infección.</td>
+              </tr>
+              <tr class="hover:bg-carbon-800 transition-colors">
+                <td class="px-4 py-2 font-mono font-bold text-white text-sm">7</td>
+                <td class="px-4 py-2">Radiactividad.</td>
+              </tr>
+              <tr class="hover:bg-carbon-800 transition-colors">
+                <td class="px-4 py-2 font-mono font-bold text-white text-sm">8</td>
+                <td class="px-4 py-2">Corrosividad.</td>
+              </tr>
+              <tr class="hover:bg-carbon-800 transition-colors">
+                <td class="px-4 py-2 font-mono font-bold text-white text-sm">9</td>
+                <td class="px-4 py-2">Peligro de reacción violenta espontánea.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+          <div class="p-3 rounded-xl bg-carbon-850/70 border border-carbon-800">
+            <span class="font-bold text-white block mb-1">Cifras Duplicadas (33, 66)</span>
+            <p class="text-carbon-400 text-[11px]">Indican <strong class="text-carbon-300">intensificación</strong> del peligro (Ej: 3 = inflamable, 33 = muy inflamable).</p>
+          </div>
+          <div class="p-3 rounded-xl bg-carbon-850/70 border border-carbon-800">
+            <span class="font-bold text-white block mb-1">Cero al final (30, 80)</span>
+            <p class="text-carbon-400 text-[11px]">Se usa para completar a 2 dígitos cuando el peligro se indica con una sola cifra.</p>
+          </div>
+        </div>
+
+        <hr class="border-carbon-800">
+
+        <!-- 3. Etiquetas (Rombos visuales) -->
+        <span class="text-xs font-bold uppercase tracking-wider text-carbon-300 block">Etiquetas de Riesgo (Clases)</span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+          <!-- CLASE 1 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800">
+            <div class="adr-diamond bg-orange-500"><div class="adr-content text-black text-shadow-none">💥</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-orange-400 block mb-0.5">CLASE 1</span>
+              <span class="text-xs font-bold text-white">Explosivos</span>
             </div>
+          </div>
 
-            <div>
-              <span class="text-xs uppercase font-extrabold text-white block" id="adrSelectedTitle">OXÍGENO COMPRIMIDO</span>
-              <p class="text-xs text-carbon-300 mt-0.5" id="adrSelectedDesc">Gas comburente a alta presión. Riesgo de inflamación violenta en contacto con grasas y combustibles.</p>
-              <div class="flex items-center space-x-2 mt-1.5">
-                <span id="adrSafetyDist" class="text-[11px] font-bold px-2 py-0.5 rounded bg-redmed-950 text-white border border-redmed-700">Distancia Segura: 50 - 100m</span>
-              </div>
+          <!-- CLASE 2.1 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800">
+            <div class="adr-diamond bg-redmed-500"><div class="adr-content">🔥</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-redmed-400 block mb-0.5">CLASE 2.1</span>
+              <span class="text-xs font-bold text-white">Gases Inflamables</span>
             </div>
           </div>
 
-          <div class="text-xs text-carbon-400 max-w-xs text-right hidden sm:block font-mono">
-            <span>Arriba: <strong>Nº Peligro (Kemler)</strong></span><br>
-            <span>Abajo: <strong>Nº Sustancia (ONU)</strong></span>
+          <!-- CLASE 2.2 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800">
+            <div class="adr-diamond bg-emerald-500"><div class="adr-content">💨</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-emerald-400 block mb-0.5">CLASE 2.2</span>
+              <span class="text-xs font-bold text-white">Gases No Inflamables</span>
+            </div>
           </div>
+
+          <!-- CLASE 2.3 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800">
+            <div class="adr-diamond bg-white border-carbon-400"><div class="adr-content text-black text-shadow-none">💀</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-carbon-300 block mb-0.5">CLASE 2.3</span>
+              <span class="text-xs font-bold text-white">Gases Tóxicos</span>
+            </div>
+          </div>
+
+          <!-- CLASE 3 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800">
+            <div class="adr-diamond bg-redmed-500"><div class="adr-content">🔥</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-redmed-400 block mb-0.5">CLASE 3</span>
+              <span class="text-xs font-bold text-white">Líquidos Inflamables</span>
+            </div>
+          </div>
+
+          <!-- CLASE 4.1 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800">
+            <div class="adr-diamond adr-41"><div class="adr-content">🔥</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-redmed-300 block mb-0.5">CLASE 4.1</span>
+              <span class="text-xs font-bold text-white">Sólidos Inflamables</span>
+            </div>
+          </div>
+
+          <!-- CLASE 4.2 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800">
+            <div class="adr-diamond adr-42"><div class="adr-content">🔥</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-redmed-300 block mb-0.5">CLASE 4.2</span>
+              <span class="text-xs font-bold text-white">Combustión Espontánea</span>
+            </div>
+          </div>
+
+          <!-- CLASE 4.3 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800">
+            <div class="adr-diamond bg-blue-500"><div class="adr-content">💧</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-blue-400 block mb-0.5">CLASE 4.3</span>
+              <span class="text-xs font-bold text-white">Peligro con el Agua</span>
+            </div>
+          </div>
+
+          <!-- CLASE 5.1 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800">
+            <div class="adr-diamond bg-yellow-400"><div class="adr-content text-black text-shadow-none">⭕</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-yellow-400 block mb-0.5">CLASE 5.1</span>
+              <span class="text-xs font-bold text-white">Comburentes</span>
+            </div>
+          </div>
+
+          <!-- CLASE 5.2 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800">
+            <div class="adr-diamond adr-52"><div class="adr-content text-black text-shadow-none">🔥</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-yellow-500 block mb-0.5">CLASE 5.2</span>
+              <span class="text-xs font-bold text-white">Peróxidos Orgánicos</span>
+            </div>
+          </div>
+
+          <!-- CLASE 6.1 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800">
+            <div class="adr-diamond bg-white border-carbon-400"><div class="adr-content text-black text-shadow-none">💀</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-carbon-300 block mb-0.5">CLASE 6.1</span>
+              <span class="text-xs font-bold text-white">Tóxicos</span>
+            </div>
+          </div>
+
+          <!-- CLASE 6.2 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800">
+            <div class="adr-diamond bg-white border-carbon-400"><div class="adr-content text-black text-shadow-none">☣️</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-carbon-300 block mb-0.5">CLASE 6.2</span>
+              <span class="text-xs font-bold text-white">Infecciosos</span>
+            </div>
+          </div>
+
+          <!-- CLASE 7 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800">
+            <div class="adr-diamond adr-7"><div class="adr-content text-black text-shadow-none">☢️</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-yellow-300 block mb-0.5">CLASE 7</span>
+              <span class="text-xs font-bold text-white">Radiactivos</span>
+            </div>
+          </div>
+
+          <!-- CLASE 8 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800">
+            <div class="adr-diamond adr-8"><div class="adr-content text-black text-shadow-none">🧪</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-carbon-400 block mb-0.5">CLASE 8</span>
+              <span class="text-xs font-bold text-white">Corrosivos</span>
+            </div>
+          </div>
+
+          <!-- CLASE 9 -->
+          <div class="flex items-center gap-4 p-2.5 rounded-xl bg-carbon-850/60 border border-carbon-800 sm:col-span-2">
+            <div class="adr-diamond adr-9"><div class="adr-content text-black text-shadow-none">⚠️</div></div>
+            <div class="leading-tight">
+              <span class="text-[10px] font-bold text-carbon-400 block mb-0.5">CLASE 9</span>
+              <span class="text-xs font-bold text-white">Materias y Objetos Peligrosos Diversos</span>
+            </div>
+          </div>
+
         </div>
 
-        <!-- Guía Rápida Kemler -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-          <div class="p-3 rounded-xl bg-carbon-850/70 border border-carbon-800">
-            <span class="font-bold text-white block mb-1">Prefijo 'X'</span>
-            <p class="text-carbon-400 text-[11px]">Prohibido aplicar agua directa sobre el producto (reacción violenta o emisión de gases tóxicos).</p>
-          </div>
-          <div class="p-3 rounded-xl bg-carbon-850/70 border border-carbon-800">
-            <span class="font-bold text-white block mb-1">Cifra Duplicada (22, 33, 66)</span>
-            <p class="text-carbon-400 text-[11px]">Intensificación del peligro (ej: <strong>33</strong> = Líquido muy inflamable, <strong>22</strong> = Gas criogénico licuado).</p>
-          </div>
-          <div class="p-3 rounded-xl bg-carbon-850/70 border border-carbon-800">
-            <span class="font-bold text-redmed-400 block mb-1">Clase 2: Gases</span>
-            <p class="text-carbon-400 text-[11px]"><strong>20</strong> Asfixiante | <strong>23</strong> Inflamable | <strong>25</strong> Comburente | <strong>26</strong> Tóxico | <strong>268</strong> Tóxico corrosivo.</p>
-          </div>
+        <div class="p-3 rounded-xl bg-carbon-900 border border-carbon-800 text-xs text-carbon-300 mt-2">
+          <strong class="text-redmed-400">Pauta para Técnicos:</strong> Aproximación sanitaria siempre con <strong>viento a la espalda</strong>. Estacionar la ambulancia orientada hacia la vía de escape y sin bloquear el acceso.
         </div>
 
-        <!-- Lista Frecuente -->
-        <div>
-          <span class="text-xs font-bold uppercase tracking-wider text-carbon-400 block mb-2">Gases y Sustancias Comunes en Carretera</span>
-          <div id="adrResultsContainer" class="space-y-2 max-h-60 overflow-y-auto custom-scroll pr-1">
-            <!-- Injected by JS -->
-          </div>
-        </div>
-
-        <div class="p-3 rounded-xl bg-carbon-900 border border-carbon-800 text-xs text-carbon-300">
-          <strong class="text-redmed-400">Pauta para Técnicos:</strong> Aproximación sanitaria siempre con <strong>viento a la espalda</strong>. Estacionar la ambulancia orientada hacia la vía de escape y sin bloquear vehículos de bomberos.
-        </div>
       </div>
     </section>
 
@@ -902,8 +1088,8 @@
       </button>
 
       <button onclick="navigateTab('adr')" id="nav-adr" class="nav-btn flex-1 py-1 flex flex-col items-center justify-center text-carbon-400 hover:text-white transition-colors">
-        <svg class="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
-        <span class="text-[10px] font-bold">ADR Gases</span>
+        <svg class="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2L2 12l10 10 10-10L12 2z"/></svg>
+        <span class="text-[10px] font-bold">ADR</span>
       </button>
 
       <button onclick="navigateTab('triage')" id="nav-triage" class="nav-btn flex-1 py-1 flex flex-col items-center justify-center text-carbon-400 hover:text-white transition-colors">
@@ -1511,71 +1697,7 @@
     }
 
     /* ==========================================================
-       5. MERCANCÍAS PELIGROSAS (ADR / GASES / KEMLER)
-       ========================================================== */
-    const adrDatabase = [
-      { un: "1072", kemler: "25", name: "OXÍGENO COMPRIMIDO", desc: "Gas comburente a alta presión. Facilita incendios intensos. Prohibido contacto con aceites/grasas.", dist: "50 - 100m" },
-      { un: "1073", kemler: "225", name: "OXÍGENO LÍQUIDO REFRIGERADO", desc: "Líquido criogénico fuertemente comburente. Quemaduras térmicas por congelación.", dist: "100m" },
-      { un: "1075", kemler: "23", name: "GASES LICUADOS DEL PETRÓLEO (GLP)", desc: "Gas inflamable más pesado que el aire. Riesgo de inflamación y explosión BLEVE.", dist: "100 - 300m" },
-      { un: "1978", kemler: "23", name: "PROPANO", desc: "Gas licuado altamente inflamable. Se acumula en puntos bajos y conducciones subterráneas.", dist: "100 - 300m" },
-      { un: "1011", kemler: "23", name: "BUTANO", desc: "Gas inflamable. Vapores invisibles con riesgo de ignición por chispas lejanas.", dist: "100 - 250m" },
-      { un: "1005", kemler: "268", name: "AMONÍACO ANHIDRO", desc: "Gas muy tóxico y corrosivo. Quemaduras químicas graves en ojos y vía aérea por inhalación.", dist: "150 - 300m" },
-      { un: "1017", kemler: "265", name: "CLORO", desc: "Gas tóxico y comburente con fuerte olor picante. Produce edema agudo de pulmón no cardiogénico.", dist: "200 - 500m" },
-      { un: "1013", kemler: "20", name: "DIÓXIDO DE CARBONO (CO₂)", desc: "Gas asfixiante simple. Incoloro e inodoro, desplaza rápidamente el oxígeno.", dist: "50m" },
-      { un: "1049", kemler: "23", name: "HIDRÓGENO COMPRIMIDO", desc: "Gas extremadamente inflamable y muy ligero. Llama transparente a plena luz del día.", dist: "100m" },
-      { un: "1066", kemler: "20", name: "NITRÓGENO COMPRIMIDO", desc: "Gas inerte asfixiante. Riesgo de pérdida rápida de consciencia sin aviso previo.", dist: "50m" },
-      { un: "1977", kemler: "22", name: "NITRÓGENO LÍQUIDO REFRIGERADO", desc: "Criogénico a -196ºC. Asfixia rápida y congelación destructiva de tejidos biológicos.", dist: "100m" },
-      { un: "1203", kemler: "33", name: "GASOLINA / CARBURANTE", desc: "Líquido muy inflamable con vapores densos explosivos a temperatura ambiente.", dist: "50 - 100m" },
-      { un: "1202", kemler: "30", name: "GASÓLEO / DIÉSEL", desc: "Combustible líquido clase media. Riesgo por incendio tras derrame extenso.", dist: "50m" },
-      { un: "1830", kemler: "80", name: "ÁCIDO SULFÚRICO (>51%)", desc: "Líquido muy corrosivo. Desprende calor violento si se echa agua sobre el ácido.", dist: "50 - 100m" }
-    ];
-
-    function searchAdrDatabase() {
-      const q = document.getElementById('adrSearchInput').value.trim().toUpperCase();
-      const container = document.getElementById('adrResultsContainer');
-      container.innerHTML = '';
-
-      const filtered = adrDatabase.filter(item => 
-        item.un.includes(q) || item.kemler.toUpperCase().includes(q) || item.name.toUpperCase().includes(q)
-      );
-
-      if (filtered.length === 0) {
-        container.innerHTML = '<div class="p-3 text-xs text-carbon-400 text-center">No se encontraron coincidencias exactas. Consultar con Bomberos/Central.</div>';
-        return;
-      }
-
-      filtered.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'p-2.5 rounded-xl bg-carbon-850 border border-carbon-700 hover:border-redmed-500 transition cursor-pointer flex items-center justify-between';
-        row.onclick = () => selectAdrItem(item);
-        row.innerHTML = `
-          <div class="flex items-center space-x-3">
-            <div class="w-12 h-9 rounded bg-amber-500 text-black font-black text-xs flex flex-col items-center justify-center font-mono">
-              <span class="border-b border-black w-full text-center leading-tight">${item.kemler}</span>
-              <span class="w-full text-center leading-tight">${item.un}</span>
-            </div>
-            <div>
-              <span class="text-xs font-bold text-white block">${item.name}</span>
-              <span class="text-[11px] text-carbon-400 line-clamp-1">${item.desc}</span>
-            </div>
-          </div>
-          <span class="text-[10px] font-mono text-white font-semibold ml-2 whitespace-nowrap bg-carbon-800 px-2 py-0.5 rounded">${item.dist}</span>
-        `;
-        container.appendChild(row);
-      });
-    }
-
-    function selectAdrItem(item) {
-      document.getElementById('panelKemlerDisplay').textContent = item.kemler;
-      document.getElementById('panelUnDisplay').textContent = item.un;
-      document.getElementById('adrSelectedTitle').textContent = item.name;
-      document.getElementById('adrSelectedDesc').textContent = item.desc;
-      document.getElementById('adrSafetyDist').textContent = `Distancia Segura: ${item.dist}`;
-      showToast(`Ficha ADR: ONU ${item.un}`);
-    }
-
-    /* ==========================================================
-       6. ALGORITMO TRIAGE (START Y JumpSTART)
+       5. ALGORITMO TRIAGE (START Y JumpSTART)
        ========================================================== */
     let triageMode = 'start';
     let triageStep = 1;
@@ -1820,8 +1942,6 @@ Hora: ${new Date().toLocaleTimeString()}`;
       calculateO2();
       resetGcs();
       calculateApgar();
-      searchAdrDatabase();
-      selectAdrItem(adrDatabase[0]);
       resetTriageWizard();
     });
   </script>
